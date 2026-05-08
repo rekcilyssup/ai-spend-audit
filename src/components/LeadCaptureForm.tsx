@@ -3,12 +3,11 @@
 import { useState, type FormEvent } from 'react';
 
 interface LeadCaptureFormProps {
-  auditId: string;
   onSubmit: (data: { email: string; companyName?: string; role?: string; teamSize?: number }) => void;
   successMessage?: string;
 }
 
-export default function LeadCaptureForm({ auditId, onSubmit, successMessage }: LeadCaptureFormProps) {
+export default function LeadCaptureForm({ onSubmit, successMessage }: LeadCaptureFormProps) {
   const [email, setEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [role, setRole] = useState('');
@@ -47,7 +46,7 @@ export default function LeadCaptureForm({ auditId, onSubmit, successMessage }: L
       // Submit to backend (will implement later)
       await onSubmit({ email, companyName: companyName || undefined, role: role || undefined, teamSize: teamSize ? Number(teamSize) : undefined });
       setIsSuccess(true);
-    } catch (err) {
+    } catch {
       setError('Failed to save. Please try again.');
     } finally {
       setIsSubmitting(false);

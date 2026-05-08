@@ -1,8 +1,6 @@
 'use client';
 
-'use client';
-
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { AuditInput, AuditResult, UseCase, ToolInput } from '@/types';
 import { runAudit } from '@/lib/audit';
@@ -11,34 +9,30 @@ import AuditResults from '@/components/AuditResults';
 import LeadCaptureForm from '@/components/LeadCaptureForm';
 import { generateShareId } from '@/lib/utils';
 
-type AppState = 'form' | 'results' | 'lead-capture' | 'share';
+type AppState = 'form' | 'results' | 'lead-capture';
 
 export default function Home() {
   const searchParams = useSearchParams();
   const shareId = searchParams.get('share');
 
-  const [state, setState] = useState<AppState>('form');
-  const [auditInput, setAuditInput] = useState<AuditInput | null>(null);
-  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
-  const [auditId] = useState(() => generateShareId());
-
-  // If shared URL, load from storage (simplified - real impl would fetch from DB)
-  useEffect(() => {
-    if (shareId) {
-      const saved = localStorage.getItem(`credex-audit-${shareId}`);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed.result) {
-            setAuditResult(parsed.result);
-            setState('results');
-          }
-        } catch (e) {
-          console.error('Failed to load shared audit:', e);
-        }
-      }
+  // Lazy initialization for shared audits
+  const getInitialState = (): { state: AppState; auditResult: AuditResult | null } => {
+    if (!shareId) return { state: 'form', auditResult: null };
+    if (typeof window === 'undefined') return { state: 'form', auditResult: null };
+    const saved = localStorage.getItem(`credex-audit-${shareId}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.result) return { state: 'results', auditResult: parsed.result };
+      } catch { /* ignore */ }
     }
-  }, [shareId]);
+    return { state: 'form', auditResult: null };
+  };
+
+  const initial = getInitialState();
+  const [state, setState] = useState<AppState>(initial.state);
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(initial.auditResult);
+  const [auditId] = useState(() => generateShareId());
 
   const handleRunAudit = (data: { tools: ToolInput[]; teamSize: number; useCase: UseCase }) => {
     const input: AuditInput = {
@@ -47,16 +41,13 @@ export default function Home() {
     };
 
     const result = runAudit(input);
-    setAuditInput(input);
     setAuditResult(result);
     setState('results');
 
-    // Save to localStorage for share functionality
     localStorage.setItem(`credex-audit-${auditId}`, JSON.stringify({ input, result }));
   };
 
   const handleBookConsultation = () => {
-    // TODO: Book consultation flow
     alert('Consultation booking coming soon! For now, email hello@credex.rocks');
   };
 
@@ -65,22 +56,13 @@ export default function Home() {
   };
 
   const handleLeadSubmit = async (data: { email: string; companyName?: string; role?: string; teamSize?: number }) => {
-    // TODO: Submit to backend (Supabase)
     console.log('Lead captured:', { ...data, auditId });
-    // For now, just save to localStorage
     const leads = JSON.parse(localStorage.getItem('credex-leads') || '[]');
     leads.push({ ...data, auditId, createdAt: new Date().toISOString() });
     localStorage.setItem('credex-leads', JSON.stringify(leads));
   };
 
-  const handleSaveSuccess = () => {
-    setState('form');
-    // Clear form and start fresh
-    localStorage.removeItem('credex-audit-form-data');
-  };
-
   const handleShare = () => {
-    // Generate share URL
     if (auditId && window) {
       const url = `${window.location.origin}?share=${auditId}`;
       navigator.clipboard.writeText(url);
@@ -90,7 +72,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      {/* Header */}
       <header className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
@@ -107,7 +88,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8">
         {state === 'form' && (
           <div>
@@ -116,7 +96,7 @@ export default function Home() {
                 Find Your AI Savings
               </h2>
               <p className="text-zinc-600 dark:text-zinc-400 max-w-lg mx-auto">
-                See if you're overspending on AI tools. Get personalized recommendations
+                See if you&apos;re overspending on AI tools. Get personalized recommendations
                 and unlock potential savings.
               </p>
             </div>
@@ -145,7 +125,6 @@ export default function Home() {
         {state === 'lead-capture' && (
           <div className="max-w-md mx-auto">
             <LeadCaptureForm
-              auditId={auditId}
               onSubmit={handleLeadSubmit}
               successMessage="We'll be in touch within 24 hours!"
             />
@@ -159,7 +138,6 @@ export default function Home() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 mt-auto">
         <div className="max-w-4xl mx-auto px-4 py-6 text-center text-sm text-zinc-500">
           <p>Built for the Credex hiring assignment</p>

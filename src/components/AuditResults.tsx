@@ -12,8 +12,6 @@ interface AuditResultsProps {
 export default function AuditResults({ result, onBookConsultation, onCaptureLead }: AuditResultsProps) {
   const { recommendations, totalMonthlySavings, totalAnnualSavings, isAlreadyOptimal, needsConsultation } = result;
 
-  const hasSavings = totalMonthlySavings > 0;
-
   if (isAlreadyOptimal) {
     return (
       <div className="w-full max-w-2xl mx-auto space-y-6">
@@ -21,10 +19,10 @@ export default function AuditResults({ result, onBookConsultation, onCaptureLead
         <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-8 text-center">
           <div className="text-4xl mb-2">✅</div>
           <h2 className="text-2xl font-bold text-green-800 dark:text-green-200 mb-2">
-            You're Spending Well
+            You&apos;re Spending Well
           </h2>
           <p className="text-green-700 dark:text-green-300 max-w-md mx-auto">
-            We didn't find significant savings opportunities for your setup.
+            We didn&apos;t find significant savings opportunities for your setup.
             Your current tool selection looks reasonable for your team size.
           </p>
         </div>
@@ -127,7 +125,7 @@ export default function AuditResults({ result, onBookConsultation, onCaptureLead
 }
 
 function RecommendationCard({ recommendation }: { recommendation: AuditRecommendation }) {
-  const { currentPlan, recommendedPlan, monthlySavings, annualSavings, reason, switchToAlternative } = recommendation;
+  const { recommendedPlan, monthlySavings, annualSavings, reason, switchToAlternative } = recommendation;
 
   return (
     <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4">

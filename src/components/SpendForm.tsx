@@ -108,28 +108,38 @@ function getDefaultTools(): ToolInput[] {
 }
 
 export default function SpendForm({ onSubmit, initialData }: SpendFormProps) {
-  const [teamSize, setTeamSize] = useState(initialData?.teamSize ?? 5);
-  const [useCase, setUseCase] = useState<UseCase>(initialData?.useCase ?? 'coding');
-  const [toolInputs, setToolInputs] = useState<ToolInput[]>(() => {
-    if (initialData?.tools) return initialData.tools;
-    return getDefaultTools();
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Load from localStorage on mount
-  useEffect(() => {
+  // Lazy initialization from localStorage
+  const [teamSize, setTeamSize] = useState<number>(() => {
+    if (initialData?.teamSize) return initialData.teamSize;
+    if (typeof window === 'undefined') return 5;
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.teamSize) setTeamSize(parsed.teamSize);
-        if (parsed.useCase) setUseCase(parsed.useCase);
-        if (parsed.tools) setToolInputs(parsed.tools);
-      } catch (e) {
-        console.error('Failed to load saved form data:', e);
-      }
+      try { const p = JSON.parse(saved); return p.teamSize || 5; } catch { return 5; }
     }
-  }, []);
+    return 5;
+  });
+
+  const [useCase, setUseCase] = useState<UseCase>(() => {
+    if (initialData?.useCase) return initialData.useCase;
+    if (typeof window === 'undefined') return 'coding';
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { const p = JSON.parse(saved); return p.useCase || 'coding'; } catch { return 'coding'; }
+    }
+    return 'coding';
+  });
+
+  const [toolInputs, setToolInputs] = useState<ToolInput[]>(() => {
+    if (initialData?.tools) return initialData.tools;
+    if (typeof window === 'undefined') return getDefaultTools();
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try { const p = JSON.parse(saved); return p.tools || getDefaultTools(); } catch { return getDefaultTools(); }
+    }
+    return getDefaultTools();
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Save to localStorage on change
   useEffect(() => {
