@@ -18,39 +18,6 @@ import type {
 } from '../types';
 import { toolPricing, getPricing, getToolDisplayName } from './pricing';
 
-// Plan alternatives for the same tool (cheaper options)
-const planAlternatives: Record<ToolPlan, ToolPlan | null> = {
-  // Cursor upgrades
-  'cursor-hobby': 'cursor-pro',
-  'cursor-pro': 'cursor-business', // actually higher, no cheaper
-  'cursor-business': null,
-  'cursor-enterprise': 'cursor-business',
-  // Copilot
-  'copilot-individual': 'copilot-business',
-  'copilot-business': null,
-  'copilot-enterprise': 'copilot-business',
-  // Claude
-  'claude-free': 'claude-pro',
-  'claude-pro': 'claude-team', // per seat if team >= 5
-  'claude-max': 'claude-pro',
-  'claude-team': 'claude-enterprise',
-  'claude-enterprise': 'claude-team',
-  // ChatGPT
-  'chatgpt-plus': 'chatgpt-team',
-  'chatgpt-team': 'chatgpt-enterprise',
-  'chatgpt-enterprise': 'chatgpt-team',
-  // APIs
-  'anthropic-api': null,
-  'openai-api': null,
-  // Gemini
-  'gemini-pro': 'gemini-api',
-  'gemini-ultra': 'gemini-pro',
-  'gemini-api': null,
-  // Windsurf
-  'windsurf-pro': 'windsurf-enterprise',
-  'windsurf-enterprise': 'windsurf-pro',
-};
-
 // Map use cases to recommended tools
 const useCaseRecommendations: Record<UseCase, { primary: ToolName; alternatives: ToolName[] }> = {
   coding: { primary: 'cursor', alternatives: ['claude', 'github-copilot', 'windsurf'] },
