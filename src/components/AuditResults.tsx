@@ -7,9 +7,10 @@ interface AuditResultsProps {
   result: AuditResult;
   onBookConsultation?: () => void;
   onCaptureLead?: () => void;
+  aiSummary?: string | null;
 }
 
-export default function AuditResults({ result, onBookConsultation, onCaptureLead }: AuditResultsProps) {
+export default function AuditResults({ result, onBookConsultation, onCaptureLead, aiSummary }: AuditResultsProps) {
   const { recommendations, totalMonthlySavings, totalAnnualSavings, isAlreadyOptimal, needsConsultation } = result;
 
   if (isAlreadyOptimal) {
@@ -26,6 +27,14 @@ export default function AuditResults({ result, onBookConsultation, onCaptureLead
             Your current tool selection looks reasonable for your team size.
           </p>
         </div>
+
+        {/* AI Summary */}
+        {aiSummary && (
+          <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
+            <h3 className="font-semibold mb-3 text-zinc-900 dark:text-zinc-50">AI Analysis</h3>
+            <p className="text-zinc-600 dark:text-zinc-400">{aiSummary}</p>
+          </div>
+        )}
 
         {/* Tool Breakdown */}
         <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
@@ -78,6 +87,14 @@ export default function AuditResults({ result, onBookConsultation, onCaptureLead
           ${totalAnnualSavings.toLocaleString()}/year in potential savings
         </div>
       </div>
+
+      {/* AI Summary */}
+      {aiSummary && (
+        <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">
+          <h3 className="font-semibold mb-3 text-zinc-900 dark:text-zinc-50">AI Analysis</h3>
+          <p className="text-zinc-600 dark:text-zinc-400">{aiSummary}</p>
+        </div>
+      )}
 
       {/* Tool Recommendations */}
       <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-800">

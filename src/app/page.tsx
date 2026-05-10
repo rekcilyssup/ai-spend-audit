@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { AuditInput, AuditResult, UseCase, ToolInput } from '@/types';
 import { runAudit } from '@/lib/audit';
+import { generateAuditSummary } from '@/services/ai-summary';
 import SpendForm from '@/components/SpendForm';
 import AuditResults from '@/components/AuditResults';
 import LeadCaptureForm from '@/components/LeadCaptureForm';
 import { generateShareId } from '@/lib/utils';
+import { saveLead } from '@/services/supabase';
 
 type AppState = 'form' | 'results' | 'lead-capture';
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const shareId = searchParams.get('share');
 
@@ -33,6 +35,22 @@ export default function Home() {
   const [state, setState] = useState<AppState>(initial.state);
   const [auditResult, setAuditResult] = useState<AuditResult | null>(initial.auditResult);
   const [auditId] = useState(() => generateShareId());
+  const [aiSummary, setAiSummary] = useState<string | null>(null);
+
+  // Generate AI summary when results are shown
+  useEffect(() => {
+    if (auditResult && state === 'results' && !aiSummary) {
+      generateAuditSummary(auditResult)
+        .then(res => {
+          if ('summary' in res && res.summary) {
+            setAiSummary(res.summary);
+          }
+        })
+        .catch(() => {
+          // Silently fail - fallback is already generated
+        });
+    }
+  }, [auditResult, state, aiSummary]);
 
   const handleRunAudit = (data: { tools: ToolInput[]; teamSize: number; useCase: UseCase }) => {
     const input: AuditInput = {
@@ -56,10 +74,10 @@ export default function Home() {
   };
 
   const handleLeadSubmit = async (data: { email: string; companyName?: string; role?: string; teamSize?: number }) => {
-    console.log('Lead captured:', { ...data, auditId });
-    const leads = JSON.parse(localStorage.getItem('credex-leads') || '[]');
-    leads.push({ ...data, auditId, createdAt: new Date().toISOString() });
-    localStorage.setItem('credex-leads', JSON.stringify(leads));
+    const success = await saveLead({ ...data, audit_id: auditId });
+    if (!success) {
+      alert('Failed to save. Please try again.');
+    }
   };
 
   const handleShare = () => {
@@ -118,6 +136,7 @@ export default function Home() {
               result={auditResult}
               onBookConsultation={handleBookConsultation}
               onCaptureLead={handleCaptureLead}
+              aiSummary={aiSummary}
             />
           </div>
         )}
@@ -144,5 +163,17 @@ export default function Home() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-50 dark:bg-black flex items-center justify-center">
+        <div className="text-zinc-500">Loading...</div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
